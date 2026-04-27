@@ -1,0 +1,79 @@
+{
+  "name": "Menu_Photo_Presign",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "menu-photo/presign",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a1111111-1111-4111-8111-111111111111",
+      "name": "Webhook",
+      "webhookId": "menu-photo-presign-9c2f8e1a"
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "\n// Generate AWS S3 presigned PUT URL (SigV4) using Web Crypto (no require()).\n// AWS keys are inlined for MVP \u2014 rotate via IAM after setup is verified.\nconst subtle = globalThis.crypto.subtle;\n\nconst AWS_KEY = '{{ $env.AWS_ACCESS_KEY_ID }}';\nconst AWS_SECRET = '{{ $env.AWS_SECRET_ACCESS_KEY }}';\nconst REGION = 'us-east-2';\nconst BUCKET = 'foodservai-menu-photos';\nconst HOST = `${BUCKET}.s3.${REGION}.amazonaws.com`;\nconst EXPIRES = 900;\nconst MAX_BYTES = 10 * 1024 * 1024;\nconst ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];\n\nconst enc = new TextEncoder();\nconst toHex = (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');\nasync function sha256Hex(str) {\n  return toHex(await subtle.digest('SHA-256', enc.encode(str)));\n}\nasync function hmac(key, data) {\n  const k = key instanceof Uint8Array ? key : enc.encode(key);\n  const cryptoKey = await subtle.importKey('raw', k, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);\n  const sig = await subtle.sign('HMAC', cryptoKey, typeof data === 'string' ? enc.encode(data) : data);\n  return new Uint8Array(sig);\n}\n\nconst raw = $input.first().json;\nconst body = raw.body || raw;\nconst fileName = String(body.file_name || body.fileName || 'upload.bin').slice(0, 200);\nconst mimeType = String(body.mime_type || body.mimeType || 'application/octet-stream').toLowerCase();\nconst sizeBytes = Number(body.size_bytes || body.sizeBytes || 0);\n\nif (!ALLOWED_MIME.includes(mimeType)) {\n  return [{ json: { ok: false, error: 'Unsupported mime_type. Allowed: ' + ALLOWED_MIME.join(', ') } }];\n}\nif (sizeBytes && sizeBytes > MAX_BYTES) {\n  return [{ json: { ok: false, error: `File too large: ${sizeBytes} bytes (max ${MAX_BYTES})` } }];\n}\n\nconst extMatch = fileName.match(/\\.([a-zA-Z0-9]{1,8})$/);\nconst extFromMime = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }[mimeType];\nconst ext = (extMatch ? extMatch[1] : extFromMime || 'bin').toLowerCase();\n\n// uuid v4 from getRandomValues (crypto.randomUUID may also be available)\nconst uuid = (globalThis.crypto.randomUUID && globalThis.crypto.randomUUID()) || (() => {\n  const b = new Uint8Array(16); globalThis.crypto.getRandomValues(b);\n  b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;\n  const h = toHex(b);\n  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;\n})();\nconst key = `menu/${uuid}.${ext}`;\n\nconst now = new Date();\nconst amzDate = now.toISOString().replace(/[:-]|\\.\\d{3}/g, '');\nconst dateStamp = amzDate.slice(0, 8);\nconst credential = `${AWS_KEY}/${dateStamp}/${REGION}/s3/aws4_request`;\nconst canonicalUri = `/${key}`;\n\nconst params = {\n  'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',\n  'X-Amz-Credential': credential,\n  'X-Amz-Date': amzDate,\n  'X-Amz-Expires': String(EXPIRES),\n  'X-Amz-SignedHeaders': 'host'\n};\nconst canonicalQuery = Object.keys(params).sort()\n  .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)\n  .join('&');\n\nconst canonicalRequest = [\n  'PUT', canonicalUri, canonicalQuery,\n  `host:${HOST}\\n`, 'host', 'UNSIGNED-PAYLOAD'\n].join('\\n');\n\nconst stringToSign = [\n  'AWS4-HMAC-SHA256', amzDate,\n  `${dateStamp}/${REGION}/s3/aws4_request`,\n  await sha256Hex(canonicalRequest)\n].join('\\n');\n\nconst kDate = await hmac('AWS4' + AWS_SECRET, dateStamp);\nconst kRegion = await hmac(kDate, REGION);\nconst kService = await hmac(kRegion, 's3');\nconst kSigning = await hmac(kService, 'aws4_request');\nconst signature = toHex(await hmac(kSigning, stringToSign));\n\nconst upload_url = `https://${HOST}${canonicalUri}?${canonicalQuery}&X-Amz-Signature=${signature}`;\nconst public_url = `https://${HOST}${canonicalUri}`;\n\nreturn [{ json: { ok: true, upload_url, public_url, key, expires_in: EXPIRES, mime_type: mimeType } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "a2222222-2222-4222-8222-222222222222",
+      "name": "Generate Presigned URL"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        440,
+        0
+      ],
+      "id": "a3333333-3333-4333-8333-333333333333",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Presigned URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Presigned URL": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
