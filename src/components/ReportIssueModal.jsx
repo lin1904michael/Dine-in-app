@@ -29,7 +29,7 @@ function ReportIssueModal({ isOpen, onClose, lang, showToast, table, defaultCate
     }
     console.log('[ReportIssue] Payload:', JSON.stringify(payload, null, 2))
     showToast(lang === 'en' ? 'Report submitted to manager' : '報告已提交給經理')
-    if (addRequest) addRequest(`Issue: ${category}`)
+    if (addRequest) addRequest(`Issue: ${category}`, { table })
     setCategory('')
     setDetails('')
     setFile(null)

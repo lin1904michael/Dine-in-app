@@ -114,20 +114,6 @@ function QuickService({ lang, showToast, table, addRequest }) {
         ))}
       </div>
 
-      {/* Order More Button */}
-      <div className="px-4 mb-2">
-        <button
-          onClick={openOrderMore}
-          className="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold text-lg shadow-md shadow-blue-600/20 active:scale-95 transition-all cursor-pointer hover:bg-blue-500"
-        >
-          🍽️ {t('orderMore', lang)}
-        </button>
-        {/* VIP Fast Lane text below Order More */}
-        <p className="text-sm text-slate-500 italic text-center mt-3 mb-6">
-          {t('vipLane', lang)}
-        </p>
-      </div>
-
       {/* Quantity Modals (water, utensils, togo) */}
       {activeModal && (
         <QuantityModal
