@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { t } from '../i18n'
+import { submitFeedback } from '../lib/feedback'
 
-function RateMeal({ lang, showToast, onOpenIssue }) {
+function RateMeal({ lang, showToast, onOpenIssue, table }) {
   const [rating, setRating] = useState(0)
   const [submitted, setSubmitted] = useState(false)
 
   const handleRate = (stars) => {
     setRating(stars)
     setSubmitted(true)
+
+    // Fire-and-forget: persist the rating regardless of the branch below.
+    submitFeedback({ rating: stars, table })
 
     if (stars === 5) {
       // 5 stars → alert redirect to Google Reviews

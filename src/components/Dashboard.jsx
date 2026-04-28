@@ -120,7 +120,7 @@ function Dashboard({ phoneNumber, table, mode, lang, toggleLang, showToast, curr
       {mode === 'full' ? (
         <TasteMatcher lang={lang} />
       ) : (
-        <RateMeal lang={lang} showToast={showToast} onOpenIssue={openReportIssue} />
+        <RateMeal lang={lang} showToast={showToast} onOpenIssue={openReportIssue} table={table} />
       )}
 
       {/* Community Group Orders (both modes) */}

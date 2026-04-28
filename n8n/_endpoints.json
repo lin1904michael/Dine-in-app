@@ -1,0 +1,40 @@
+{
+  "gallery": {
+    "id": "nAkDE8BlWTPxkavg",
+    "name": "Dine_in_gallery_list",
+    "method": "GET",
+    "webhook_path": "f98134d5-a129-41a1-836c-c046f1b5f88f",
+    "url": "https://stocktechnicaltradeassistance.zeabur.app/webhook/f98134d5-a129-41a1-836c-c046f1b5f88f"
+  },
+  "taste": {
+    "id": "9rDyWoh5AOixKpuM",
+    "name": "Dine_in_taste_match",
+    "method": "GET",
+    "webhook_path": "67e17c28-2212-4e6b-89ab-7b64793d58e9",
+    "url": "https://stocktechnicaltradeassistance.zeabur.app/webhook/67e17c28-2212-4e6b-89ab-7b64793d58e9"
+  },
+  "menu_photo_upload": {
+    "id": "ARn8TiiOJ3jJnPmN",
+    "name": "Menu_Photo_Upload",
+    "method": "POST",
+    "webhook_path": "menu-photo/upload",
+    "url": "https://stocktechnicaltradeassistance.zeabur.app/webhook/menu-photo/upload",
+    "content_type": "multipart/form-data",
+    "fields": ["file (binary, required)", "menu_item_id (int, required)", "sort_order (int, optional)"]
+  },
+  "menu_photo_insert": {
+    "id": "hVvJhvIs4MoGqISN",
+    "name": "Menu_Photo_Insert",
+    "method": "POST",
+    "webhook_path": "menu-photo/insert",
+    "url": "https://stocktechnicaltradeassistance.zeabur.app/webhook/menu-photo/insert",
+    "content_type": "application/json",
+    "body": {"menu_item_id": "int", "photo_url": "string", "sort_order": "int (optional)", "is_visible": "bool (optional)"}
+  },
+  "_aws": {
+    "bucket": "foodservai-menu-photos",
+    "region": "us-east-2",
+    "public_url_prefix": "https://foodservai-menu-photos.s3.us-east-2.amazonaws.com/menu/",
+    "n8n_credential_id": "HtByymd8zjytf8SB"
+  }
+}

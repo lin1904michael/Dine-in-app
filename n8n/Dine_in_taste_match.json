@@ -1,0 +1,86 @@
+{
+  "name": "Dine_in_taste_match",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "67e17c28-2212-4e6b-89ab-7b64793d58e9",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5bbfc1f4-82e5-4de3-b42d-a5af677d17c0",
+      "name": "Webhook",
+      "webhookId": "67e17c28-2212-4e6b-89ab-7b64793d58e9"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=WITH flavor_match AS (\n  SELECT m.id, m.item_name, m.price, m.category,\n         (SELECT p.photo_url FROM public.menu_item_photos p\n           WHERE p.menu_item_id = m.id AND p.is_visible = TRUE\n           ORDER BY p.sort_order LIMIT 1) AS photo_url\n  FROM public.menu_items m\n  WHERE m.ai_promo = TRUE AND m.dine_in = TRUE\n    AND '{{ ($json.query.flavor || '').replace(/[^a-zA-Z]/g, '').toLowerCase() }}' <> ''\n    AND (lower(m.category)  LIKE '%{{ ($json.query.flavor || '').replace(/[^a-zA-Z]/g, '').toLowerCase() }}%'\n      OR lower(m.item_name) LIKE '%{{ ($json.query.flavor || '').replace(/[^a-zA-Z]/g, '').toLowerCase() }}%')\n  ORDER BY random() LIMIT 1\n),\nany_promo AS (\n  SELECT m.id, m.item_name, m.price, m.category,\n         (SELECT p.photo_url FROM public.menu_item_photos p\n           WHERE p.menu_item_id = m.id AND p.is_visible = TRUE\n           ORDER BY p.sort_order LIMIT 1) AS photo_url\n  FROM public.menu_items m\n  WHERE m.ai_promo = TRUE AND m.dine_in = TRUE\n  ORDER BY random() LIMIT 1\n)\nSELECT * FROM flavor_match\nUNION ALL\nSELECT * FROM any_promo WHERE NOT EXISTS (SELECT 1 FROM flavor_match)\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        220,
+        0
+      ],
+      "id": "3afcd481-2d82-4d3e-941c-2d9095dfb66a",
+      "name": "Run Query",
+      "credentials": {
+        "postgres": {
+          "id": "R5AoWWAwgnm5tt1T",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        440,
+        0
+      ],
+      "id": "83901c71-4ad2-4fc7-9ada-d6bafcb50c74",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Run Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Query": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

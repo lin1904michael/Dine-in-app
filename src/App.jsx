@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import IdentityGateway from './components/IdentityGateway'
 import Dashboard from './components/Dashboard'
 import Toast from './components/Toast'
+import { submitDineInRequest } from './lib/dineInRequests'
 
 function App() {
   const [screen, setScreen] = useState('identity')
@@ -57,7 +58,18 @@ function App() {
         isQsr: opts.isQsr || false,
       },
     ])
-  }, [])
+
+    // Fire-and-forget: push to FoodServAI dine_in_requests so it lands
+    // on the GM Live Floor pad. Never throws — UI keeps working offline.
+    submitDineInRequest({
+      phone: phoneNumber,
+      table: opts.table || null,
+      mode: opts.isQsr ? 'qsr' : 'full',
+      title: isPaid ? `Ordered: ${title}` : title,
+      status: 'pending',
+      totalPrice: Number(opts.totalPrice) || 0,
+    })
+  }, [phoneNumber])
 
   return (
     <div className="min-h-screen bg-white text-slate-900">

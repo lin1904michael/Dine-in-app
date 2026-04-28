@@ -1,13 +1,6 @@
 import { useState } from 'react'
 import { t } from '../i18n'
-
-const MENU_ITEMS = [
-  { id: 1, name: 'Sizzling Black Pepper Beef', tag: 'Savory', price: 28 },
-  { id: 2, name: 'Dim Sum Soup Dumplings', tag: 'Light', price: 16 },
-  { id: 3, name: 'Kung Pao Chicken', tag: 'Spicy', price: 22 },
-  { id: 4, name: 'Artisanal Pepperoni Pizza', tag: 'Savory', price: 24 },
-  { id: 5, name: 'Gourmet Wagyu Burger', tag: 'Savory', price: 32 },
-]
+import { matchByFlavor } from '../lib/tasteMatch'
 
 const TASTE_OPTIONS = [
   { label: 'Spicy', emoji: '🌶️' },
@@ -15,37 +8,34 @@ const TASTE_OPTIONS = [
   { label: 'Light', emoji: '🥬' },
 ]
 
+// Fallback shown when the backend returns no AI-promo dishes (e.g. empty menu,
+// network down). Lets the diner see something useful instead of a dead screen.
+const LOCAL_FALLBACK = {
+  Spicy:  { item_name: 'Kung Pao Chicken',          category: 'Spicy',  price: 22, photo_url: null },
+  Savory: { item_name: 'Sizzling Black Pepper Beef', category: 'Savory', price: 28, photo_url: null },
+  Light:  { item_name: 'Dim Sum Soup Dumplings',     category: 'Light',  price: 16, photo_url: null },
+}
+
 function TasteMatcher({ lang }) {
   const [activeTaste, setActiveTaste] = useState(null)
-  const [recommendedIds, setRecommendedIds] = useState([])
   const [loading, setLoading] = useState(false)
   const [matchResult, setMatchResult] = useState(null)
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!activeTaste) return
 
     setLoading(true)
     setMatchResult(null)
 
-    setTimeout(() => {
-      const matchingItems = MENU_ITEMS.filter((item) => item.tag === activeTaste)
-      const available = matchingItems.find((item) => !recommendedIds.includes(item.id))
+    const remote = await matchByFlavor(activeTaste)
+    const result = remote || LOCAL_FALLBACK[activeTaste] || null
+    setMatchResult(result)
+    setLoading(false)
+  }
 
-      let match
-      let newRecommendedIds
-
-      if (available) {
-        match = available
-        newRecommendedIds = [...recommendedIds, available.id]
-      } else {
-        match = matchingItems[0]
-        newRecommendedIds = [matchingItems[0].id]
-      }
-
-      setRecommendedIds(newRecommendedIds)
-      setMatchResult(match)
-      setLoading(false)
-    }, 1500)
+  const formatPrice = (price) => {
+    const n = typeof price === 'number' ? price : parseFloat(price)
+    return Number.isFinite(n) ? n.toFixed(2) : String(price ?? '')
   }
 
   return (
@@ -86,13 +76,23 @@ function TasteMatcher({ lang }) {
 
         {/* Result Card */}
         {matchResult && !loading && (
-          <div className="mt-4 bg-white border border-blue-200 rounded-2xl p-4 shadow-sm">
-            <p className="text-lg font-bold text-slate-900">
-              🎯 Match Found: {matchResult.name}
-            </p>
-            <p className="text-slate-600 text-sm mt-1">
-              {matchResult.tag} &middot; ${matchResult.price}
-            </p>
+          <div className="mt-4 bg-white border border-blue-200 rounded-2xl overflow-hidden shadow-sm">
+            {matchResult.photo_url && (
+              <img
+                src={matchResult.photo_url}
+                alt={matchResult.item_name}
+                className="w-full h-40 object-cover"
+                loading="lazy"
+              />
+            )}
+            <div className="p-4">
+              <p className="text-lg font-bold text-slate-900">
+                🎯 Match Found: {matchResult.item_name}
+              </p>
+              <p className="text-slate-600 text-sm mt-1">
+                {matchResult.category} &middot; ${formatPrice(matchResult.price)}
+              </p>
+            </div>
           </div>
         )}
       </div>
