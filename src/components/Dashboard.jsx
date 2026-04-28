@@ -132,7 +132,7 @@ function Dashboard({ phoneNumber, table, mode, lang, toggleLang, showToast, curr
           {t('groupOrderDesc', lang)}
         </p>
         <button
-          onClick={() => window.open('https://foodservai.com/group-order', '_blank')}
+          onClick={() => window.open('https://group-buy.foodservai.com/', '_blank')}
           className="w-full py-3 rounded-xl bg-amber-500 text-white font-bold text-sm shadow-md shadow-amber-500/20 active:scale-95 transition-all cursor-pointer hover:bg-amber-400 flex items-center justify-center gap-2"
         >
           🛒 {t('browseGroupBuys', lang)}

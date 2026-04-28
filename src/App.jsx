@@ -1,12 +1,11 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import IdentityGateway from './components/IdentityGateway'
 import Dashboard from './components/Dashboard'
 import Toast from './components/Toast'
 import { submitDineInRequest } from './lib/dineInRequests'
 
 function App() {
-  const [screen, setScreen] = useState('identity')
-  const [phoneNumber, setPhoneNumber] = useState('')
+  // Identity gateway removed — diners land directly on the dashboard.
+  const [phoneNumber] = useState('')
   const [lang, setLang] = useState('en')
   const [toast, setToast] = useState({ visible: false, message: '' })
   const [currentView, setCurrentView] = useState('dashboard')
@@ -21,17 +20,13 @@ function App() {
     }
   }, [])
 
-  // QSR mode: bypass Screen 1 entirely
+  // Reward flag was previously set on OTP verify; preserve that behavior so
+  // the existing "Bounce-Back Reward" logic keeps unlocking on first load.
   useEffect(() => {
-    if (mode === 'qsr') {
-      setScreen('dashboard')
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('foodservai_reward', 'true')
     }
-  }, [mode])
-
-  const handleJoin = (phone) => {
-    setPhoneNumber(phone)
-    setScreen('dashboard')
-  }
+  }, [])
 
   const toggleLang = () => setLang((prev) => (prev === 'en' ? 'zh' : 'en'))
 
@@ -73,22 +68,18 @@ function App() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      {screen === 'identity' ? (
-        <IdentityGateway onJoin={handleJoin} lang={lang} />
-      ) : (
-        <Dashboard
-          phoneNumber={phoneNumber}
-          table={table}
-          mode={mode}
-          lang={lang}
-          toggleLang={toggleLang}
-          showToast={showToast}
-          currentView={currentView}
-          setCurrentView={setCurrentView}
-          activeRequests={activeRequests}
-          addRequest={addRequest}
-        />
-      )}
+      <Dashboard
+        phoneNumber={phoneNumber}
+        table={table}
+        mode={mode}
+        lang={lang}
+        toggleLang={toggleLang}
+        showToast={showToast}
+        currentView={currentView}
+        setCurrentView={setCurrentView}
+        activeRequests={activeRequests}
+        addRequest={addRequest}
+      />
       <Toast message={toast.message} isVisible={toast.visible} onHide={hideToast} />
     </div>
   )
