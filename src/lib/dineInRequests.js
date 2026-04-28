@@ -16,12 +16,13 @@ const PATH = '/webhook/dadc0fd4-159d-479b-8c69-f93e5b716a04'
  * Fire-and-forget — never throws, UI keeps working offline.
  *
  * @param {object} req
- * @param {string|null} [req.phone]    — diner phone (digits only)
- * @param {string|null} [req.table]    — table id (e.g. "12")
- * @param {string} [req.mode='full']   — 'full' | 'qsr'
- * @param {string} req.title           — request title shown on Live Floor card
+ * @param {string|null} [req.phone]            — diner phone (digits only)
+ * @param {string|null} [req.table]            — table id (e.g. "A1")
+ * @param {string} [req.mode='full']           — 'full' | 'qsr'
+ * @param {string} req.title                   — request title shown on Live Floor card
  * @param {string} [req.status='pending']
- * @param {number} [req.totalPrice=0]  — 0 for non-paid; > 0 for paid items
+ * @param {number} [req.totalPrice=0]          — 0 for non-paid; > 0 for paid items
+ * @param {string} [req.restaurantSlug='tofu-king'] — multi-tenant restaurant identifier
  */
 export function submitDineInRequest({
   phone = null,
@@ -30,6 +31,7 @@ export function submitDineInRequest({
   title,
   status = 'pending',
   totalPrice = 0,
+  restaurantSlug = 'tofu-king',
 }) {
   return n8nPost(PATH, {
     phone_number: phone || '',
@@ -38,5 +40,6 @@ export function submitDineInRequest({
     title: title || 'Request',
     status,
     total_price: Number(totalPrice) || 0,
+    restaurant_slug: restaurantSlug || 'tofu-king',
   })
 }

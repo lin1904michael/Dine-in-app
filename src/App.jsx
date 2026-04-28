@@ -12,11 +12,14 @@ function App() {
   const [activeRequests, setActiveRequests] = useState([])
 
   // Extract URL params once
-  const { table, mode } = useMemo(() => {
+  const { table, mode, restaurantSlug } = useMemo(() => {
     const params = new URLSearchParams(window.location.search)
     return {
       table: params.get('table') || '12',
       mode: params.get('mode') || 'full',
+      // ?r=<slug> identifies which restaurant the QR belongs to (multi-tenant).
+      // Defaults to tofu-king for legacy QR codes that omit the parameter.
+      restaurantSlug: params.get('r') || 'tofu-king',
     }
   }, [])
 
@@ -63,8 +66,9 @@ function App() {
       title: isPaid ? `Ordered: ${title}` : title,
       status: 'pending',
       totalPrice: Number(opts.totalPrice) || 0,
+      restaurantSlug,
     })
-  }, [phoneNumber])
+  }, [phoneNumber, restaurantSlug])
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
