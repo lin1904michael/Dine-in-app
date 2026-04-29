@@ -42,9 +42,11 @@ function QuickService({ lang, showToast, table, addRequest }) {
     } else if (item.modalType === 'quantity') {
       setActiveModal(item.key)
     } else if (item.key === 'check') {
+      console.log('[QuickService] Request Check for table:', table)
       showToast(lang === 'en' ? 'Check requested!' : '已請求結帳！')
       if (addRequest) addRequest('Check', { table })
     } else if (item.key === 'napkins') {
+      console.log('[QuickService] Napkins requested for table:', table)
       showToast(lang === 'en' ? 'Napkins on the way!' : '紙巾即將送到！')
       if (addRequest) addRequest('Napkins', { table })
     }
@@ -66,6 +68,7 @@ function QuickService({ lang, showToast, table, addRequest }) {
 
   const hasOrderItems = Object.values(orderQuantities).some((q) => q > 0)
 
+  // Build checkout items from Order More selections
   const handleProceedToCheckout = () => {
     const items = Object.values(ORDER_MORE_ITEMS).flat()
       .filter((item) => (orderQuantities[item.key] || 0) > 0)
@@ -98,22 +101,20 @@ function QuickService({ lang, showToast, table, addRequest }) {
 
   return (
     <>
-      {/* Horizontal scrollable service menu */}
-      <div className="overflow-x-auto px-4 py-3">
-        <div className="flex gap-3 w-max">
-          {GRID_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => handleItemClick(item)}
-              className="w-24 h-24 rounded-3xl bg-slate-100 border border-slate-200 shadow-sm flex flex-col items-center justify-center font-semibold active:scale-95 transition-transform cursor-pointer hover:border-emerald-600/50 text-slate-900 shrink-0"
-            >
-              <span className="text-2xl mb-1.5">{item.emoji}</span>
-              <span className="text-xs text-center px-1 leading-tight">{t(item.key, lang)}</span>
-            </button>
-          ))}
-        </div>
+      <div className="grid grid-cols-2 gap-4 p-5">
+        {GRID_ITEMS.map((item) => (
+          <button
+            key={item.key}
+            onClick={() => handleItemClick(item)}
+            className="min-h-[120px] rounded-3xl bg-slate-100 border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-2 text-base font-semibold active:scale-95 transition-transform cursor-pointer hover:border-emerald-600/50 text-slate-900"
+          >
+            <span className="text-5xl">{item.emoji}</span>
+            {t(item.key, lang)}
+          </button>
+        ))}
       </div>
 
+      {/* Quantity Modals (water, utensils, togo) */}
       {activeModal && (
         <QuantityModal
           isOpen={!!activeModal}
@@ -126,6 +127,7 @@ function QuickService({ lang, showToast, table, addRequest }) {
         />
       )}
 
+      {/* Condiments multi-select modal */}
       <CondimentsModal
         isOpen={condimentsOpen}
         onClose={() => setCondimentsOpen(false)}
@@ -135,12 +137,14 @@ function QuickService({ lang, showToast, table, addRequest }) {
         addRequest={addRequest}
       />
 
+      {/* Order More Modal (item selection) */}
       <Modal
         isOpen={orderMoreOpen}
         onClose={() => setOrderMoreOpen(false)}
         title={`🍽️ ${t('orderMore', lang)}`}
       >
         <div className="space-y-5">
+          {/* Drinks Section */}
           <div>
             <h4 className="text-sm font-bold text-blue-600 uppercase tracking-wide mb-2">
               🥤 {t('drinks', lang)}
@@ -156,15 +160,28 @@ function QuickService({ lang, showToast, table, addRequest }) {
                     <span className="text-sm text-slate-500 ml-2">${item.price.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button onClick={() => adjustOrder(item.key, -1)} className="h-9 w-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-lg font-bold text-slate-600 active:bg-slate-100 cursor-pointer transition-colors">-</button>
-                    <span className="w-6 text-center font-bold text-lg tabular-nums">{orderQuantities[item.key] || 0}</span>
-                    <button onClick={() => adjustOrder(item.key, 1)} className="h-9 w-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold active:bg-blue-700 cursor-pointer transition-colors">+</button>
+                    <button
+                      onClick={() => adjustOrder(item.key, -1)}
+                      className="h-9 w-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-lg font-bold text-slate-600 active:bg-slate-100 cursor-pointer transition-colors"
+                    >
+                      -
+                    </button>
+                    <span className="w-6 text-center font-bold text-lg tabular-nums">
+                      {orderQuantities[item.key] || 0}
+                    </span>
+                    <button
+                      onClick={() => adjustOrder(item.key, 1)}
+                      className="h-9 w-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold active:bg-blue-700 cursor-pointer transition-colors"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Appetizers Section */}
           <div>
             <h4 className="text-sm font-bold text-blue-600 uppercase tracking-wide mb-2">
               🍢 {t('appetizers', lang)}
@@ -180,15 +197,28 @@ function QuickService({ lang, showToast, table, addRequest }) {
                     <span className="text-sm text-slate-500 ml-2">${item.price.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button onClick={() => adjustOrder(item.key, -1)} className="h-9 w-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-lg font-bold text-slate-600 active:bg-slate-100 cursor-pointer transition-colors">-</button>
-                    <span className="w-6 text-center font-bold text-lg tabular-nums">{orderQuantities[item.key] || 0}</span>
-                    <button onClick={() => adjustOrder(item.key, 1)} className="h-9 w-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold active:bg-blue-700 cursor-pointer transition-colors">+</button>
+                    <button
+                      onClick={() => adjustOrder(item.key, -1)}
+                      className="h-9 w-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-lg font-bold text-slate-600 active:bg-slate-100 cursor-pointer transition-colors"
+                    >
+                      -
+                    </button>
+                    <span className="w-6 text-center font-bold text-lg tabular-nums">
+                      {orderQuantities[item.key] || 0}
+                    </span>
+                    <button
+                      onClick={() => adjustOrder(item.key, 1)}
+                      className="h-9 w-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold active:bg-blue-700 cursor-pointer transition-colors"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Proceed to Checkout Button */}
           <button
             onClick={handleProceedToCheckout}
             disabled={!hasOrderItems}
@@ -199,6 +229,7 @@ function QuickService({ lang, showToast, table, addRequest }) {
         </div>
       </Modal>
 
+      {/* Unified Checkout Modal */}
       <CheckoutModal
         isOpen={checkoutOpen}
         onClose={handleCheckoutClose}
