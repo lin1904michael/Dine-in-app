@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { t } from '../i18n'
 import LogoEvolution from './LogoEvolution'
-import RewardButton from './RewardButton'
 import QuickService from './QuickService'
 import QsrMenu from './QsrMenu'
 import VisualMenu from './VisualMenu'
@@ -67,19 +66,16 @@ function Dashboard({ phoneNumber, table, mode, lang, toggleLang, showToast, curr
                 <div>
                   <p className="text-white text-sm font-medium">{req.title}</p>
                   <p className="text-slate-400 text-xs">{req.time}</p>
-                  {/* QSR paid order: Pickup Ticket only */}
                   {req.isQsr && req.ticket && (
                     <span className="inline-block mt-1 px-3 py-0.5 bg-emerald-500/20 text-emerald-300 text-xs font-bold rounded-full">
                       🎫 {t('orderTicket', lang)}{req.ticket}
                     </span>
                   )}
-                  {/* Full-service paid order: Table + Ticket */}
                   {!req.isQsr && req.isPaidOrder && req.ticket && (
                     <span className="inline-block mt-1 px-3 py-0.5 bg-blue-500/20 text-blue-300 text-xs font-bold rounded-full">
                       🪑 Table {req.table} • {t('orderTicket', lang)}{req.ticket}
                     </span>
                   )}
-                  {/* Full-service standard request: Table only */}
                   {!req.isQsr && !req.isPaidOrder && req.table && (
                     <span className="inline-block mt-1 px-3 py-0.5 bg-slate-500/20 text-slate-300 text-xs font-bold rounded-full">
                       🪑 Table {req.table}
@@ -95,16 +91,12 @@ function Dashboard({ phoneNumber, table, mode, lang, toggleLang, showToast, curr
         </div>
       )}
 
-      {/* Bounce-Back Reward */}
-      <RewardButton lang={lang} showToast={showToast} onOpenDiscovery={() => setCurrentView('discovery')} />
-
       {/* Mode-dependent sections */}
       {mode === 'full' ? (
         <QuickService lang={lang} showToast={showToast} table={table} addRequest={addRequest} />
       ) : (
         <>
           <QsrMenu lang={lang} showToast={showToast} addRequest={addRequest} />
-          {/* VIP Lane text below QSR Add-On grid */}
           <div className="px-5 mt-4 mb-1">
             <p className="text-sm text-slate-500 italic text-center">
               {t('vipLane', lang)}
